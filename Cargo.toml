@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "Lab0/count-down"
+, "Lab0/enum-shape", "Lab0/humanized-size"
+, "Lab0/unique-id"]
