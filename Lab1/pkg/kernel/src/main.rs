@@ -22,3 +22,4 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
         }
     }
 }
+ 
