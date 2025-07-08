@@ -68,7 +68,16 @@ pub fn print_internal(args: Arguments) {
 fn panic(info: &core::panic::PanicInfo) -> ! {
     // force unlock serial for panic output
     // unsafe { SERIAL.get().unwrap().force_unlock() };
+    log::error!("KERNEL PANIC!");
+    
 
-    error!("ERROR: panic!\n\n{:#?}", info);
+    if let Some(location) = info.location() {
+        log::error!("Panic occurred in file '{}' at line {}", 
+                   location.file(), location.line());
+    }
+    
+    let message = info.message();
+    log::error!("Panic message: {}", message);
+    
     loop {}
 }
