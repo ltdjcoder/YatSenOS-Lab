@@ -11,7 +11,7 @@ pub struct SerialPort {
 }
 
 impl SerialPort {
-    //fixme
+    //fix-me
     pub const fn new(port: u16) -> Self {
         Self {
             data: Port::new(port),
@@ -48,12 +48,13 @@ impl SerialPort {
             // if self.data.read() != 0xAE {
             //     return; 
             // }
-            
+
+            self.int_en.write(0x01);   
         }
     }
 
 
-    // fixme
+    // fix-me
     pub fn send(&mut self, data: u8) {
         unsafe {
             // 等待发送缓冲区为空
@@ -66,7 +67,7 @@ impl SerialPort {
 
     /// Receives a byte on the serial port no wait.
     pub fn receive(&mut self) -> Option<u8> {
-        // fixme
+        // fix-me
         unsafe {
             if (self.line_sts.read() & 1) != 0 {
                 Some(self.data.read())
@@ -74,6 +75,14 @@ impl SerialPort {
                 None
             }
         }
+    }
+
+    /// 发送退格序列：退格 + 空格 + 退格
+    /// 这会删除终端上的最后一个字符
+    pub fn backspace(&mut self) {
+        self.send(0x08); // 退格
+        self.send(0x20); // 空格（清除字符）
+        self.send(0x08); // 再次退格
     }
 }
 

@@ -5,7 +5,7 @@ pub fn init() {
     static LOGGER: Logger = Logger;
     log::set_logger(&LOGGER).unwrap();
 
-    // FIXME: Configure the logger
+    // FIX-ME: Configure the logger
     log::set_max_level(log::LevelFilter::Info);
 
     info!("Logger Initialized.");
@@ -24,7 +24,7 @@ impl log::Log for Logger {
             return;
         }
 
-        // FIXME: Implement the logger with serial output
+        // FIX-ME: Implement the logger with serial output
         let level_str = match record.level() {
             Level::Error => "ERROR",
             Level::Warn => "WARN ",

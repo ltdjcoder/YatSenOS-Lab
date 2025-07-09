@@ -126,7 +126,7 @@ fn load_segment(
 
     let mut page_table_flags = PageTableFlags::PRESENT;
 
-    // FIXME: handle page table flags with segment flags
+    // FIX-ME: handle page table flags with segment flags
     let segment_flags = segment.flags();
     
     if segment_flags.is_write() {
