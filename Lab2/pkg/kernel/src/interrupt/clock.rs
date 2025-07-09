@@ -1,5 +1,5 @@
 use crate::interrupt::consts::Interrupts;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use x86_64::structures::{gdt, idt::{InterruptDescriptorTable, InterruptStackFrame}};
 use core::sync::atomic::{AtomicUsize, Ordering};
 use crate::interrupt::consts::Irq;
 
