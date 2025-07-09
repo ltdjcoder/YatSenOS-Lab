@@ -15,7 +15,7 @@ static COUNTER: AtomicUsize = AtomicUsize::new(0);
 extern "x86-interrupt" fn clock_interrupt_handler(_stack_frame: InterruptStackFrame) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         if inc_counter() % 0x10 == 0 {
-            info!("Tick! @{}", read_counter());
+            // info!("Tick! @{}", read_counter());
         }
         super::ack();
     });

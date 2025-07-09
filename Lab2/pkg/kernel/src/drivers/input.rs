@@ -17,6 +17,31 @@ lazy_static! {
 pub fn push_key(key: Key) {
     if INPUT_BUF.push(key).is_err() {
         warn!("Input buffer is full. Dropping key '{:?}'", key);
+    }else{
+        match key {
+            b'\n' => {
+                if let Some(mut serial) = get_serial() {
+                    serial.send(b'\n');
+                }}
+            b'\r' => {
+                if let Some(mut serial) = get_serial() {
+                    serial.send(b'\n');
+                }}
+            // 退格键 (Backspace: 0x08, Delete: 0x7F)
+            0x08 | 0x7F => {
+                    if let Some(mut serial) = get_serial() {
+                        serial.backspace();
+                    }}
+            key if key >= 32 && key <= 126 => {
+                if let Some(mut serial) = get_serial() {
+                    serial.send(key);
+                }
+            }
+            _ => {
+                
+            }
+        }
+        // println!("Key pushed: {}", key as char);
     }
 }
 
@@ -45,17 +70,11 @@ pub fn get_line() -> String {
         
         match key {
             b'\n' => {
-                if let Some(mut serial) = get_serial() {
-                    serial.send(b'\n');
-                }
                 break;
             }
             
             
             b'\r' => {
-                if let Some(mut serial) = get_serial() {
-                    serial.send(b'\n');
-                }
                 break;
             }
             
@@ -63,19 +82,11 @@ pub fn get_line() -> String {
             0x08 | 0x7F => {
                 if !line.is_empty() {
                     line.pop();
-                    
-                    if let Some(mut serial) = get_serial() {
-                        serial.backspace();
-                    }
                 }
             }
             
             key if key >= 32 && key <= 126 => {
                 line.push(key as char);
-                
-                if let Some(mut serial) = get_serial() {
-                    serial.send(key);
-                }
             }
             
             _ => {
