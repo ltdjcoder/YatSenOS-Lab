@@ -148,6 +148,10 @@ impl ProcessInner {
         self.vm_mut().handle_page_fault(addr)
     }
 
+    pub fn load_elf(&mut self, elf: &boot::ElfFile) {
+        self.vm_mut().load_elf(elf);
+    }
+
     /// Save the process's context
     /// mark the process as ready 为什么？
     pub(super) fn save(&mut self, context: &ProcessContext) {

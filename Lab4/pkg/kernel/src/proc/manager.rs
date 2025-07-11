@@ -4,9 +4,9 @@ use crate::{memory::{
     allocator::{ALLOCATOR, HEAP_SIZE},
     get_frame_alloc_for_sure, PAGE_SIZE,
 }, proc::vm::stack};
-use alloc::{collections::*, format};
+use alloc::{collections::*, format, sync::Weak};
 use arrayvec::ArrayVec;
-use boot::{App, AppList};
+use boot::{App, AppList, ElfFile};
 use spin::{Mutex, RwLock};
 use x86::current;
 use x86_64::{structures::idt::InterruptStackFrame, VirtAddr};
@@ -238,4 +238,53 @@ impl ProcessManager {
     pub fn app_list(&self) -> Option<&'static ArrayVec<App<'static>, 16>> {
         self.app_list
     }
+
+
+    pub fn spawn(
+        &self,
+        elf: &ElfFile,
+        name: String,
+        parent: Option<Weak<Process>>,
+        proc_data: Option<ProcessData>,
+    ) -> ProcessId {
+        let kproc = self.get_proc(&KERNEL_PID).unwrap();
+        let page_table = kproc.read().clone_page_table();
+        let proc_vm = Some(ProcessVm::new(page_table));
+        let proc = Process::new(name, parent, proc_vm, proc_data);
+
+        let mut inner = proc.write();
+        
+        // FIXME: load elf to process pagetable
+        inner.load_elf(elf);
+        
+        // FIXME: alloc new stack for process
+        let stack_top = proc.alloc_init_stack();
+        
+        // Get ELF entry point
+        let entry_point = VirtAddr::new(elf.header.pt2.entry_point());
+        
+        // Set up the process context with entry point and stack for user process
+        inner.get_proc_context().init_user_stack_frame(entry_point, stack_top);
+        
+        // FIXME: mark process as ready
+        inner.set_status(ProgramStatus::Ready);
+        
+        drop(inner);
+
+        trace!("New {:#?}", &proc);
+
+        let pid = proc.pid();
+        
+        // FIXME: something like kernel thread
+        // Add to process map
+        self.add_proc(pid, proc);
+        
+        // Push to ready queue
+        self.push_ready(pid);
+
+        pid
+    }
+
 }
+
+

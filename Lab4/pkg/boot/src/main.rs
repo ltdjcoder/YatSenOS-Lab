@@ -85,7 +85,7 @@ fn efi_main() -> Status {
     );
 
     // FIX-ME: load and map the kernel elf file
-    elf::load_elf(&elf, config.physical_memory_offset, &mut page_table, &mut frame_allocator)
+    elf::load_elf(&elf, config.physical_memory_offset, &mut page_table, &mut frame_allocator, false)
         .expect("Failed to load ELF");
 
     // FIX-ME: map kernel stack

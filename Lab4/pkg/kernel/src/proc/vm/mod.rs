@@ -3,6 +3,7 @@ use x86_64::{
     structures::paging::{page::*, *},
     VirtAddr,
 };
+use boot::ElfFile;
 
 use crate::{humanized_size, memory::*};
 
@@ -51,6 +52,22 @@ impl ProcessVm {
         let alloc = &mut *get_frame_alloc_for_sure();
 
         self.stack.handle_page_fault(addr, mapper, alloc)
+    }
+
+    pub fn load_elf(&mut self, elf: &ElfFile) {
+        let mapper = &mut self.page_table.mapper();
+        let alloc = &mut *get_frame_alloc_for_sure();
+
+        self.stack.init(mapper, alloc);
+
+        // FIXME: load elf to process pagetable
+        elf::load_elf(
+            elf,
+            *crate::memory::PHYSICAL_OFFSET.get().unwrap(),
+            mapper,
+            alloc,
+            true, // user_access = true for user processes
+        ).expect("Failed to load ELF in ProcessVm");
     }
 
     pub(super) fn memory_usage(&self) -> u64 {

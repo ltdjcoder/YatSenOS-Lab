@@ -1,7 +1,7 @@
 use volatile::{access::ReadOnly, VolatileRef};
 use x86_64::{registers::rflags::RFlags, structures::idt::InterruptStackFrameValue, VirtAddr, structures::gdt::SegmentSelector};
 
-use crate::{memory::gdt::get_selector, RegistersValue};
+use crate::{memory::gdt::{get_selector, get_user_selector}, RegistersValue};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -62,6 +62,19 @@ impl ProcessContext {
         self.value.stack_frame.stack_segment = selector.data_selector;
 
         trace!("Init stack frame: {:#?}", &self.value.stack_frame);
+    }
+
+    pub fn init_user_stack_frame(&mut self, entry: VirtAddr, stack_top: VirtAddr) {
+        self.value.stack_frame.stack_pointer = stack_top;
+        self.value.stack_frame.instruction_pointer = entry;
+        self.value.stack_frame.cpu_flags =
+            RFlags::IOPL_HIGH | RFlags::IOPL_LOW | RFlags::INTERRUPT_FLAG;
+
+        let selector = get_user_selector();
+        self.value.stack_frame.code_segment = selector.user_code_selector;
+        self.value.stack_frame.stack_segment = selector.user_data_selector;
+
+        trace!("Init user stack frame: {:#?}", &self.value.stack_frame);
     }
 }
 
