@@ -47,6 +47,14 @@ fn efi_main() -> Status {
         set_entry(elf.header.pt2.entry_point() as usize);
     }
 
+    let apps = if config.load_apps {
+        info!("Loading apps...");
+        Some(load_apps())
+    } else {
+        info!("Skip loading apps");
+        None
+    };
+
     // 3. Load MemoryMap fix-me
     let mmap = uefi::boot::memory_map(uefi::boot::MemoryType::LOADER_DATA).expect("Failed to get memory map");
 
@@ -101,13 +109,7 @@ fn efi_main() -> Status {
     let ptr = uefi::table::system_table_raw().expect("Failed to get system table");
     let system_table = ptr.cast::<core::ffi::c_void>();
 
-    let apps = if config.load_apps {
-        info!("Loading apps...");
-        Some(load_apps())
-    } else {
-        info!("Skip loading apps");
-        None
-    };
+    
 
 
     // 6. Exit boot and jump to ELF entry

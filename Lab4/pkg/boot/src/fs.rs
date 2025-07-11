@@ -94,7 +94,7 @@ pub fn load_apps() -> AppList {
 
         match info {
             Some(entry) => {
-                let file_handle = root
+                let file_handle = handle
                     .open(entry.file_name(), FileMode::Read, FileAttribute::empty())
                     .expect("Failed to open app file");
                  /* FIXME: get handle for app binary file */ 

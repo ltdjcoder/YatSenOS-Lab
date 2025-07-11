@@ -26,7 +26,7 @@ const DEFAULT_CONFIG: Config = Config {
     physical_memory_offset: 0xFFFF_8000_0000_0000,
     kernel_path: "\\KERNEL.ELF",
     cmdline: "",
-    load_apps: false,
+    load_apps: true,
 };
 
 impl<'a> Config<'a> {
@@ -44,6 +44,8 @@ impl<'a> Config<'a> {
                 config.process(key, value);
             }
         }
+        //FIXME
+        config.load_apps = true;
         config
     }
 
