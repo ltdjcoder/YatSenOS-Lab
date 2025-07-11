@@ -87,7 +87,10 @@ impl ProcessManager {
     pub unsafe fn switch_next(&self, context: &mut ProcessContext) -> ProcessContext {
 
         // self.current().write().set_status(ProgramStatus::Ready);
-        self.current().write().pause();
+        if(self.current().read().status() == ProgramStatus::Running) {
+            self.current().write().pause();
+        }
+        
         self.save_current(context);
         self.ready_queue.lock().push_back(processor::get_pid());
 
@@ -105,7 +108,9 @@ impl ProcessManager {
                     next_pid = pid;
                     break;
                 }else{
-                    self.ready_queue.lock().push_back(pid);
+                    if proc.read().status() != ProgramStatus::Dead {
+                        self.ready_queue.lock().push_back(pid);
+                    }
                 }
             }
             // If not ready, continue to fetch the next one
