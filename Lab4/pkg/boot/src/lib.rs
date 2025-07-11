@@ -7,6 +7,7 @@ pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
 pub use uefi::Status;
 
 use arrayvec::ArrayVec;
+use xmas_elf::ElfFile;
 use core::ptr::NonNull;
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::{OffsetPageTable, PageTable};
@@ -34,6 +35,8 @@ pub struct BootInfo {
 
     /// The system table virtual address
     pub system_table: NonNull<core::ffi::c_void>,
+
+    pub loaded_apps: Option<AppList>,
 }
 
 /// Get current page table from CR3
@@ -82,6 +85,20 @@ pub fn set_entry(entry: usize) {
 /// This macro just creates a function named `_start`, which the linker will use as the entry
 /// point. The advantage of using this macro instead of providing an own `_start` function is
 /// that the macro ensures that the function and argument types are correct.
+/// 
+
+use arrayvec::{ArrayString};
+
+/// App information
+pub struct App<'a> {
+    /// The name of app
+    pub name: ArrayString<16>,
+    /// The ELF file
+    pub elf: ElfFile<'a>,
+}
+
+pub type AppList = ArrayVec<App<'static>, 16>;
+
 #[macro_export]
 macro_rules! entry_point {
     ($path:path) => {
@@ -94,3 +111,4 @@ macro_rules! entry_point {
         }
     };
 }
+

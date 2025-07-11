@@ -51,7 +51,7 @@ pub fn new_stack_test_thread() {
     wait(pid);
 }
 
-fn wait(pid: ProcessId) {
+pub fn wait(pid: ProcessId) {
     loop {
         // FIXME: try to get the status of the process
 
