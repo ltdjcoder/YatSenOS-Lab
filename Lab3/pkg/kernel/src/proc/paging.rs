@@ -54,6 +54,10 @@ impl PageTableContext {
         }
     }
 
+    pub fn page_table_addr(&self) -> u64 {
+        self.reg.addr.start_address().as_u64()
+    }
+
     /// Load the page table to Cr3 register.
     pub fn load(&self) {
         unsafe { Cr3::write(self.reg.addr, self.reg.flags) }

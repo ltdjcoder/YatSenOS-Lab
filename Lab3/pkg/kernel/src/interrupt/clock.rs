@@ -5,6 +5,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use crate::interrupt::consts::Irq;
 use crate::memory::gdt::CLOCK_INTERRUPT_IST_INDEX;
 use crate::utils::regs;
+use crate::proc::get_process_manager;
 
 //FIX-ME
 pub unsafe fn register_idt(idt: &mut InterruptDescriptorTable) {
@@ -27,10 +28,11 @@ pub unsafe fn register_idt(idt: &mut InterruptDescriptorTable) {
 // as_handler!(clock_interrupt);
 
 
-pub extern "C" fn clock_interrupt(mut context: ProcessContext) {
+pub unsafe extern "C" fn clock_interrupt(mut context: ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         info!("Clock interrupt happen.");
-        proc::switch(&mut context);
+        // proc::switch(&mut context);
+        context = get_process_manager().switch_next(&mut context);
         super::ack();
     });
 }

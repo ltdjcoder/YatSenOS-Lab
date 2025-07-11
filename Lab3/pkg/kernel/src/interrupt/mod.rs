@@ -29,7 +29,7 @@ lazy_static! {
 pub fn init() {
     IDT.load();
 
-    // FIXME: check and init APIC
+    // FIX-ME: check and init APIC
     if XApic::support() {
         let mut lapic = unsafe { XApic::new(physical_to_virtual(LAPIC_ADDR)) };
         lapic.cpu_init();
@@ -37,7 +37,7 @@ pub fn init() {
         panic!("Local APIC not supported!");
     }
 
-    // FIXME: enable serial irq with IO APIC (use enable_irq)
+    // FIX-ME: enable serial irq with IO APIC (use enable_irq)
     let mut ioapic = unsafe { IoApic::new(physical_to_virtual(IOAPIC_ADDR)) };
     ioapic.enable(consts::Irq::Serial0 as u8, 0);
     ioapic.enable(consts::Irq::Serial1 as u8, 0);

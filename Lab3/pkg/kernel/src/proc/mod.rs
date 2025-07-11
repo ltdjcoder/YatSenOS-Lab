@@ -19,6 +19,7 @@ pub use context::ProcessContext;
 pub use paging::PageTableContext;
 pub use data::ProcessData;
 pub use pid::ProcessId;
+pub use manager::get_process_manager;
 
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::VirtAddr;
@@ -78,6 +79,7 @@ pub fn print_process_list() {
 pub fn env(key: &str) -> Option<String> {
     x86_64::instructions::interrupts::without_interrupts(|| {
         // FIXME: get current process's environment variable
+        Option::None
     })
 }
 

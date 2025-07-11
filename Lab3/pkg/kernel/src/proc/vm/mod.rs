@@ -8,9 +8,9 @@ use crate::{humanized_size, memory::*};
 
 pub mod stack;
 
-use self::stack::*;
+use self::stack::Stack;
 
-use super::{PageTableContext, ProcessId};
+use crate::proc::{PageTableContext, ProcessId};
 
 type MapperRef<'a> = &'a mut OffsetPageTable<'static>;
 type FrameAllocatorRef<'a> = &'a mut BootInfoFrameAllocator;
@@ -39,8 +39,12 @@ impl ProcessVm {
 
     pub fn init_proc_stack(&mut self, pid: ProcessId) -> VirtAddr {
         // FIXME: calculate the stack for pid
+        // let stack_top_addr = self
+        //     .stack
+        //     .init_stack(pid, &mut self.page_table.mapper(), &mut *get_frame_alloc_for_sure());
         // FIXME: calculate the stack for pid
-        stack_top_addr
+        // stack_top_addr
+        VirtAddr::zero()
     }
 
     pub fn handle_page_fault(&mut self, addr: VirtAddr) -> bool {

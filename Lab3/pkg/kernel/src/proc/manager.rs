@@ -60,7 +60,7 @@ impl ProcessManager {
     }
 
     #[inline]
-    fn get_proc(&self, pid: &ProcessId) -> Option<Arc<Process>> {
+    pub fn get_proc(&self, pid: &ProcessId) -> Option<Arc<Process>> {
         self.processes.read().get(pid).cloned()
     }
 
@@ -70,28 +70,28 @@ impl ProcessManager {
     }
 
     pub fn save_current(&self, context: &ProcessContext) {
-        // FIXME: update current process's tick count
+        // FIX-ME: update current process's tick count
         // self.current().write().tick(); // 在这里加1 ？ 不干
 
-        // FIXME: save current process's context
+        // FIX-ME: save current process's context
         self.current().write().save(context);
 
     }
 
-    // FIXME: switch to the next process
+    // FIX-ME: switch to the next process
         //      - save current process's context
         //      - handle ready queue update
         //      - restore next process's context
         // 我直接大搬迁
         // 换下一个：先存这个，在找下个，加载下个，全都考虑队列
-    pub fn switch_next(&self, context: &mut ProcessContext) -> ProcessId {
+    pub unsafe fn switch_next(&self, context: &mut ProcessContext) -> ProcessContext {
 
         // self.current().write().set_status(ProgramStatus::Ready);
         self.current().write().pause();
         self.save_current(context);
         self.ready_queue.lock().push_back(processor::get_pid());
 
-        // FIXM-E: fetch the next process from ready queue
+        // FIX-ME: fetch the next process from ready queue
         let mut ready_queue = self.ready_queue.lock();
         let mut next_pid_result = ready_queue.pop_front();
         let mut next_pid = ProcessId(0);
@@ -112,23 +112,25 @@ impl ProcessManager {
             next_pid_result = ready_queue.pop_front();
         }
 
+        let mut context = context.clone();
+
         // FIX-ME: restore next process's context
         if let Some(proc) = self.get_proc(&next_pid) {
-            proc.as_ref().write().restore(); 
+            context = proc.as_ref().write().restore(); 
             // proc.as_ref().write().set_status(ProgramStatus::Running);
             proc.as_ref().write().resume();
         } else {
             warn!("No process found for pid: {}", next_pid);
-            return ProcessId(0); 
+            return context; 
         }
 
         // FIX-ME: update processor's current pid
         processor::set_pid(next_pid);
 
-        print_process_list();
+        // print_process_list();
 
         // FIX-ME: return next process's pid
-        next_pid
+        context
     }
 
     pub fn spawn_kernel_thread(

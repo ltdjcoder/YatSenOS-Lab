@@ -148,14 +148,14 @@ impl LocalApic for XApic {
     /// Initialize the xAPIC for the current CPU.
     fn cpu_init(&mut self) {
         unsafe {
-            // FIXME: Enable local APIC; set spurious interrupt vector.
+            // FIX-ME: Enable local APIC; set spurious interrupt vector.
             // 启用Local APIC并设置伪中断向量
             // 用 bitflags 语义更加清晰
             let mut svr = self.read(APIC_SVR);
             svr |= SvrFlags::APIC_ENABLE.bits() | SPURIOUS_INTERRUPT_VECTOR;
             self.write(APIC_SVR, svr);
 
-            // FIXME: The timer repeatedly counts down at bus frequency
+            // FIX-ME: The timer repeatedly counts down at bus frequency
             self.write(APIC_LVT_TIMER, LVT_Editor::new()
                 .write_masked(false) // 禁用计时器中断
                 .write_level_triggered(false) // 边沿触发
@@ -164,21 +164,21 @@ impl LocalApic for XApic {
                 .write_bit(17, true)
                 .bits());
             
-            // FIXME: Disable logical interrupt lines (LINT0, LINT1)
+            // FIX-ME: Disable logical interrupt lines (LINT0, LINT1)
             // 3. 禁用逻辑中断线 (LINT0, LINT1) FIX-ME 不能这样做（
             self.write(APIC_LVT_LINT0, LVT_Editor::new().write_masked(true).bits());
             self.write(APIC_LVT_LINT1, LvtFlags::MASKED.bits());
             self.write(0x350, 1 << 16); // set Mask
 
-            // FIXME: Disable performance counter overflow interrupts (PCINT)
+            // FIX-ME: Disable performance counter overflow interrupts (PCINT)
             // 4. 禁用性能计数器溢出中断 (PCINT)
             self.write(APIC_LVT_PCINT, LvtFlags::MASKED.bits());
 
-            // FIXME: Map error interrupt to IRQ_ERROR.
+            // FIX-ME: Map error interrupt to IRQ_ERROR.
             // 5. 映射错误中断到ERROR向量
             self.write(APIC_LVT_ERROR, ERROR_INTERRUPT_VECTOR);
 
-            // FIXME: Clear error status register (requires back-to-back writes).
+            // FIX-ME: Clear error status register (requires back-to-back writes).
             // 6. 清除错误状态寄存器 (需要连续两次写入)
             self.write(APIC_ESR, 0);
             self.write(APIC_ESR, 0);
@@ -195,24 +195,24 @@ impl LocalApic for XApic {
         }
     }
     
-    //FIXME
+    //FIX-ME
     fn id(&self) -> u32 {
         unsafe { self.read(APIC_ID) >> 24 }
     }
 
-    //FIXME
+    //FIX-ME
     fn version(&self) -> u32 {
         unsafe { self.read(APIC_VERSION) }
     }
 
-    //FIXME
+    //FIX-ME
     fn icr(&self) -> u64 {
         unsafe { 
             (self.read(APIC_ICR_HIGH) as u64) << 32 | self.read(APIC_ICR_LOW) as u64 
         }
     }
 
-    //FIXME
+    //FIX-ME
     fn set_icr(&mut self, value: u64) {
         unsafe {
             // 等待直到ICR可用 (Delivery Status位为0)
@@ -227,7 +227,7 @@ impl LocalApic for XApic {
         }
     }
 
-    //FIXME
+    //FIX-ME
     fn eoi(&mut self) {
         unsafe {
             self.write(APIC_EOI, 0);

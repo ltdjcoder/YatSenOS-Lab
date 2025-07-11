@@ -7,6 +7,10 @@ use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::page::PageRange;
 use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
+use x86_64::registers::control::Cr3;
+use crate::proc::paging::PageTableContext;
+use crate::proc::ProcessContext;
+use x86_64::instructions::tlb;
 
 
 #[derive(Clone)]
@@ -147,19 +151,42 @@ impl ProcessInner {
     /// Save the process's context
     /// mark the process as ready 为什么？
     pub(super) fn save(&mut self, context: &ProcessContext) {
-        // FIXME: save the process's context
+        // FIX-ME: save the process's context
         self.context = context.clone();
     }
 
-    /// Restore the process's context
+        /// Restore the process's context
     /// mark the process as running
     /// 这里的“存储”应该是指加载到运行环境，那为何要传入参数？
     // pub(super) fn restore(&mut self, context: &mut ProcessContext) {
-    pub(super) fn restore(&mut self){
-        // FIXME: restore the process's context
-        
+    //pub(super) fn restore(&mut self){
+        // FIX-ME: restore the process's context
+        // FIX-ME: restore the process's page table
+    /// Restores the process context.
+    ///
+    /// This function is unsafe because it directly manipulates registers and memory to switch contexts.
+    pub unsafe fn restore(&self) -> ProcessContext {
+        // 1. Switch Page Table
+        let page_table_addr = self.vm().page_table.page_table_addr();
+        let (frame, _) = Cr3::read();
+        if frame.start_address().as_u64() != page_table_addr {
+            unsafe {
+                Cr3::write(
+                    x86_64::structures::paging::PhysFrame::from_start_address(
+                        x86_64::PhysAddr::new(page_table_addr),
+                    )
+                    .unwrap(),
+                    x86_64::registers::control::Cr3Flags::empty(),
+                );
+                // When cr3 is switched, the tlb should be refreshed
+                tlb::flush_all();
+            }
+        }
 
-        // FIXME: restore the process's page table
+        // 2. Restore registers by overwriting the context on the interrupt stack.
+        // The `as_handler` macro will then pop these values into the registers
+        // and `iretq` will use the restored stack frame.
+        self.context
     }
 
     pub fn parent(&self) -> Option<Arc<Process>> {
@@ -167,11 +194,10 @@ impl ProcessInner {
     }
 
     pub fn kill(&mut self, ret: isize) {
-        // FIXME: set exit code
-
-        // FIXME: set status to dead
-
-        // FIXME: take and drop unused resources
+        self.exit_code = Some(ret);
+        self.status = ProgramStatus::Dead;
+        self.proc_vm = None;
+        self.proc_data = None;
     }
 }
 

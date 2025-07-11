@@ -1,5 +1,5 @@
 use volatile::{access::ReadOnly, VolatileRef};
-use x86_64::{registers::rflags::RFlags, structures::idt::InterruptStackFrameValue, VirtAddr};
+use x86_64::{registers::rflags::RFlags, structures::idt::InterruptStackFrameValue, VirtAddr, structures::gdt::SegmentSelector};
 
 use crate::{memory::gdt::get_selector, RegistersValue};
 
@@ -17,10 +17,10 @@ pub struct ProcessContext {
 }
 
 impl ProcessContext {
-    pub fn new(stack_frame: InterruptStackFrameValue, reg_value: RegistersValue) -> Self{
+    pub fn new(stack_frame: InterruptStackFrameValue) -> Self{
         Self{
             value: ProcessContextValue {
-                regs: reg_value,
+                regs: RegistersValue::default(),
                 stack_frame,
             }
         }
@@ -61,7 +61,7 @@ impl ProcessContext {
         self.value.stack_frame.code_segment = selector.code_selector;
         self.value.stack_frame.stack_segment = selector.data_selector;
 
-        trace!("Init stack frame: {:#?}", &self.stack_frame);
+        trace!("Init stack frame: {:#?}", &self.value.stack_frame);
     }
 }
 
