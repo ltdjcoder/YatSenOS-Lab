@@ -151,11 +151,11 @@ impl ProcessInner {
     /// Save the process's context
     /// mark the process as ready 为什么？
     pub(super) fn save(&mut self, context: &ProcessContext) {
-        // FIX-ME: save the process's context
+        // FIXME: save the process's context
         self.context = context.clone();
     }
 
-        /// Restore the process's context
+    /// Restore the process's context
     /// mark the process as running
     /// 这里的“存储”应该是指加载到运行环境，那为何要传入参数？
     // pub(super) fn restore(&mut self, context: &mut ProcessContext) {
@@ -165,6 +165,7 @@ impl ProcessInner {
     /// Restores the process context.
     ///
     /// This function is unsafe because it directly manipulates registers and memory to switch contexts.
+
     pub unsafe fn restore(&self) -> ProcessContext {
         // 1. Switch Page Table
         let page_table_addr = self.vm().page_table.page_table_addr();
@@ -198,6 +199,10 @@ impl ProcessInner {
         self.status = ProgramStatus::Dead;
         self.proc_vm = None;
         self.proc_data = None;
+    }
+
+    pub fn get_proc_context(& mut self) -> & mut ProcessContext {
+        & mut self.context
     }
 }
 

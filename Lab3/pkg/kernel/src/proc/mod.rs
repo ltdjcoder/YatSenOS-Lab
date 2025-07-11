@@ -10,6 +10,7 @@ mod vm;
 
 use manager::*;
 use process::*;
+use x86::current;
 use crate::memory::PAGE_SIZE;
 use vm::ProcessVm;
 
@@ -78,8 +79,8 @@ pub fn print_process_list() {
 
 pub fn env(key: &str) -> Option<String> {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        // FIXME: get current process's environment variable
-        Option::None
+        // FIX-ME: get current process's environment variable
+        get_process_manager().current().read().env(key)
     })
 }
 

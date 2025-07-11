@@ -39,12 +39,11 @@ impl ProcessVm {
 
     pub fn init_proc_stack(&mut self, pid: ProcessId) -> VirtAddr {
         // FIXME: calculate the stack for pid
-        // let stack_top_addr = self
-        //     .stack
-        //     .init_stack(pid, &mut self.page_table.mapper(), &mut *get_frame_alloc_for_sure());
+        let stack_top_addr = self
+            .stack
+            .init_stack(pid, &mut self.page_table.mapper(), &mut *get_frame_alloc_for_sure());
         // FIXME: calculate the stack for pid
-        // stack_top_addr
-        VirtAddr::zero()
+        stack_top_addr
     }
 
     pub fn handle_page_fault(&mut self, addr: VirtAddr) -> bool {

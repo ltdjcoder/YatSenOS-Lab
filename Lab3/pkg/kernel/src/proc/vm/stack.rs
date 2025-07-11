@@ -70,6 +70,28 @@ impl Stack {
         self.usage = STACK_DEF_PAGE;
     }
 
+    pub fn init_stack(
+        &mut self,
+        pid: crate::proc::ProcessId,
+        mapper: MapperRef,
+        alloc: FrameAllocatorRef,
+    ) -> VirtAddr {
+        debug_assert!(self.usage == 0, "Stack is not empty.");
+
+        // Calculate stack address based on PID
+        // Each process gets 4GiB stack space offset
+        let stack_offset = (pid.0 as u64) * 0x100000000; // 4GiB offset per PID
+        let stack_top_addr = STACK_MAX - stack_offset;
+        let stack_bot_addr = stack_top_addr - STACK_DEF_SIZE;
+
+        // Map the default stack page
+        self.range = elf::map_range(stack_bot_addr, STACK_DEF_PAGE, mapper, alloc).unwrap();
+        self.usage = STACK_DEF_PAGE;
+
+        // Return stack top address (aligned to 8 bytes)
+        VirtAddr::new(stack_top_addr - 8)
+    }
+
     pub fn handle_page_fault(
         &mut self,
         addr: VirtAddr,

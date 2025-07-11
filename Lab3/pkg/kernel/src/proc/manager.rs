@@ -1,13 +1,13 @@
 use super::*;
-use crate::memory::{
+use crate::{memory::{
     self,
     allocator::{ALLOCATOR, HEAP_SIZE},
     get_frame_alloc_for_sure, PAGE_SIZE,
-};
+}, proc::vm::stack};
 use alloc::{collections::*, format};
 use spin::{Mutex, RwLock};
 use x86::current;
-use x86_64::VirtAddr;
+use x86_64::{structures::idt::InterruptStackFrame, VirtAddr};
 use alloc::sync::Arc;
 
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
@@ -143,18 +143,22 @@ impl ProcessManager {
         let page_table = kproc.read().clone_page_table();
         let proc_vm = Some(ProcessVm::new(page_table));
         let proc = Process::new(name, Some(Arc::downgrade(&kproc)), proc_vm, proc_data);
+        let pid = proc.pid();
 
         // alloc stack for the new process base on pid
         let stack_top = proc.alloc_init_stack();
 
         // FIXME: set the stack frame
+        proc.as_ref().write().get_proc_context().init_stack_frame(entry, stack_top);
 
         // FIXME: add to process map
+        self.add_proc(pid, proc);
 
         // FIXME: push to ready queue
+        self.push_ready(pid);
 
         // FIXME: return new process pid
-        ProcessId(0)
+        pid
     }
 
     pub fn kill_current(&self, ret: isize) {
