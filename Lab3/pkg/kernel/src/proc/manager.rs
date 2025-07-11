@@ -6,14 +6,19 @@ use crate::memory::{
 };
 use alloc::{collections::*, format};
 use spin::{Mutex, RwLock};
+use x86::current;
+use x86_64::VirtAddr;
+use alloc::sync::Arc;
 
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
 
 pub fn init(init: Arc<Process>) {
 
-    // FIXME: set init process as Running
+    // FIX-ME: set init process as Running
+    init.write().set_status(ProgramStatus::Running);
 
-    // FIXME: set processor's current pid to init's pid
+    // FIX-ME: set processor's current pid to init's pid
+    processor::set_pid(init.pid());
 
     PROCESS_MANAGER.call_once(|| ProcessManager::new(init));
 }
@@ -66,22 +71,64 @@ impl ProcessManager {
 
     pub fn save_current(&self, context: &ProcessContext) {
         // FIXME: update current process's tick count
+        // self.current().write().tick(); // 在这里加1 ？ 不干
 
         // FIXME: save current process's context
+        self.current().write().save(context);
+
     }
 
+    // FIXME: switch to the next process
+        //      - save current process's context
+        //      - handle ready queue update
+        //      - restore next process's context
+        // 我直接大搬迁
+        // 换下一个：先存这个，在找下个，加载下个，全都考虑队列
     pub fn switch_next(&self, context: &mut ProcessContext) -> ProcessId {
 
-        // FIXME: fetch the next process from ready queue
+        // self.current().write().set_status(ProgramStatus::Ready);
+        self.current().write().pause();
+        self.save_current(context);
+        self.ready_queue.lock().push_back(processor::get_pid());
 
-        // FIXME: check if the next process is ready,
+        // FIXM-E: fetch the next process from ready queue
+        let mut ready_queue = self.ready_queue.lock();
+        let mut next_pid_result = ready_queue.pop_front();
+        let mut next_pid = ProcessId(0);
+
+
+        // FIX-ME: check if the next process is ready,
         //        continue to fetch if not ready
+        while let Some(pid) = next_pid_result {
+            if let Some(proc) = self.get_proc(&pid) {
+                if proc.read().status() == ProgramStatus::Ready {
+                    next_pid = pid;
+                    break;
+                }else{
+                    self.ready_queue.lock().push_back(pid);
+                }
+            }
+            // If not ready, continue to fetch the next one
+            next_pid_result = ready_queue.pop_front();
+        }
 
-        // FIXME: restore next process's context
+        // FIX-ME: restore next process's context
+        if let Some(proc) = self.get_proc(&next_pid) {
+            proc.as_ref().write().restore(); 
+            // proc.as_ref().write().set_status(ProgramStatus::Running);
+            proc.as_ref().write().resume();
+        } else {
+            warn!("No process found for pid: {}", next_pid);
+            return ProcessId(0); 
+        }
 
-        // FIXME: update processor's current pid
+        // FIX-ME: update processor's current pid
+        processor::set_pid(next_pid);
 
-        // FIXME: return next process's pid
+        print_process_list();
+
+        // FIX-ME: return next process's pid
+        next_pid
     }
 
     pub fn spawn_kernel_thread(
@@ -105,6 +152,7 @@ impl ProcessManager {
         // FIXME: push to ready queue
 
         // FIXME: return new process pid
+        ProcessId(0)
     }
 
     pub fn kill_current(&self, ret: isize) {

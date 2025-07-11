@@ -17,6 +17,15 @@ pub struct ProcessContext {
 }
 
 impl ProcessContext {
+    pub fn new(stack_frame: InterruptStackFrameValue, reg_value: RegistersValue) -> Self{
+        Self{
+            value: ProcessContextValue {
+                regs: reg_value,
+                stack_frame,
+            }
+        }
+    }   
+
     #[inline]
     pub fn as_mut(&mut self) -> VolatileRef<ProcessContextValue> {
         VolatileRef::from_mut_ref(&mut self.value)

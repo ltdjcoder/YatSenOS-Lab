@@ -1,9 +1,9 @@
 #[macro_use]
 mod macros;
 #[macro_use]
-mod regs;
+pub mod regs;
 
-pub mod clock;
+// pub mod clock;
 pub mod func;
 pub mod logger;
 

@@ -1,11 +1,13 @@
 use super::*;
 use crate::memory::*;
-use alloc::sync::Weak;
+use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use spin::*;
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::page::PageRange;
 use x86_64::structures::paging::*;
+use x86_64::VirtAddr;
+
 
 #[derive(Clone)]
 pub struct Process {
@@ -105,6 +107,10 @@ impl ProcessInner {
         self.status
     }
 
+    pub fn set_status(&mut self, status: ProgramStatus) {
+        self.status = status;
+    }
+
     pub fn pause(&mut self) {
         self.status = ProgramStatus::Ready;
     }
@@ -118,7 +124,8 @@ impl ProcessInner {
     }
 
     pub fn clone_page_table(&self) -> PageTableContext {
-        self.proc_vm.as_ref().unwrap()
+        // FIX-ME
+        self.proc_vm.as_ref().unwrap().page_table.clone_level_4()
     }
 
     pub fn is_ready(&self) -> bool {
@@ -138,15 +145,19 @@ impl ProcessInner {
     }
 
     /// Save the process's context
-    /// mark the process as ready
+    /// mark the process as ready 为什么？
     pub(super) fn save(&mut self, context: &ProcessContext) {
         // FIXME: save the process's context
+        self.context = context.clone();
     }
 
     /// Restore the process's context
     /// mark the process as running
-    pub(super) fn restore(&mut self, context: &mut ProcessContext) {
+    /// 这里的“存储”应该是指加载到运行环境，那为何要传入参数？
+    // pub(super) fn restore(&mut self, context: &mut ProcessContext) {
+    pub(super) fn restore(&mut self){
         // FIXME: restore the process's context
+        
 
         // FIXME: restore the process's page table
     }
