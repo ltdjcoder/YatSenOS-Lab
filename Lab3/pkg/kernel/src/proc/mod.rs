@@ -48,21 +48,21 @@ pub fn init() {
             Some(proc_vm),
             Option::Some(ProcessData::new())
         )
-        
     };
+
     manager::init(kproc);
 
     info!("Process Manager Initialized.");
 }
 
-// pub fn switch(context: &mut ProcessContext) {
-//     x86_64::instructions::interrupts::without_interrupts(|| {
-//         // FIXME: switch to the next process
-//         //      - save current process's context
-//         //      - handle ready queue update
-//         //      - restore next process's context
-//     });
-// }
+pub fn switch(context: &mut ProcessContext) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        // FIXME: switch to the next process
+        //      - save current process's context
+        //      - handle ready queue update
+        //      - restore next process's context
+    });
+}
 
 pub fn spawn_kernel_thread(entry: fn() -> !, name: String, data: Option<ProcessData>) -> ProcessId {
     x86_64::instructions::interrupts::without_interrupts(|| {
@@ -95,7 +95,7 @@ pub fn process_exit(ret: isize) -> ! {
 }
 
 pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
-    x86_64::instructions::interrupts::without_interrupts(|| {
+    // x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager().handle_page_fault(addr, err_code)
-    })
+    // })
 }

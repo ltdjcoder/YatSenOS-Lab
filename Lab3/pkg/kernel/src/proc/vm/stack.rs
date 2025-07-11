@@ -127,6 +127,28 @@ impl Stack {
         debug_assert!(self.is_on_stack(addr), "Address is not on stack.");
 
         // FIXME: grow stack for page fault
+        let fault_page = Page::<Size4KiB>::containing_address(addr);
+        let stack_bot = self.range.start;
+
+        if fault_page >= stack_bot {
+            // Address is already mapped
+            return Ok(());
+        }
+
+        // Map all pages from fault_page to stack_bot (exclusive)
+        let pages_to_map = Page::range(fault_page, stack_bot);
+        let num_pages_to_map = pages_to_map.count() as u64;
+
+        elf::map_range(
+            fault_page.start_address().as_u64(),
+            num_pages_to_map,
+            mapper,
+            alloc,
+        )?;
+
+        // Update stack info
+        self.range = Page::range(fault_page, self.range.end);
+        self.usage += num_pages_to_map;
 
         Ok(())
     }

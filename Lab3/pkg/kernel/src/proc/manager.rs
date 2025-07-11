@@ -116,7 +116,7 @@ impl ProcessManager {
 
         // FIX-ME: restore next process's context
         if let Some(proc) = self.get_proc(&next_pid) {
-            context = proc.as_ref().write().restore(); 
+            context = unsafe { proc.as_ref().write().restore() };
             // proc.as_ref().write().set_status(ProgramStatus::Running);
             proc.as_ref().write().resume();
         } else {
@@ -167,6 +167,23 @@ impl ProcessManager {
 
     pub fn handle_page_fault(&self, addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
         // FIXME: handle page fault
+        let current_proc = self.current();
+        // let mut proc_writer = current_proc.write();
+        // 检查缺页异常是否是由于写入一个不存在的页面引起的
+        info!("Handling page fault at {:#?} with error code: {:?}", addr, err_code);
+        if !err_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)
+        {
+            // 我们只处理由写入操作引起的缺页异常
+            return false;
+        }
+
+        if(err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)) {
+            return false;
+        }
+
+        if let vm = current_proc.as_ref().write().vm_mut() {
+            return vm.handle_page_fault(addr);
+        }
 
         false
     }
