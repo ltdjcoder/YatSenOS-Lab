@@ -1,6 +1,10 @@
 #![no_std]
 #![no_main]
 
+use lib::*;
+
+extern crate lib;
+
 const MOD: u64 = 1000000007;
 
 fn factorial(n: u64) -> u64 {

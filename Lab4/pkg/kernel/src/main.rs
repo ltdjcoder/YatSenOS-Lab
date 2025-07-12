@@ -20,6 +20,6 @@ pub fn spawn_init() -> proc::ProcessId {
     // print!("\x1b[1;1H\x1b[2J");
 
     proc::list_app();
-    proc::spawn("hello").unwrap()
+    proc::spawn("test1").unwrap()
     // ProcessId(0)
 }
