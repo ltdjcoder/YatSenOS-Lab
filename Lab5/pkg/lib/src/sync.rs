@@ -3,6 +3,8 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+use syscall_def::Syscall;
+
 use crate::*;
 
 pub struct SpinLock {
@@ -29,7 +31,7 @@ unsafe impl Sync for SpinLock {} // Why? Check reflection question 5
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Semaphore {
-    /* FIXME: record the sem key */
+    key: u32,
 }
 
 impl Semaphore {
@@ -42,7 +44,20 @@ impl Semaphore {
         sys_new_sem(self.key, value)
     }
 
-    /* FIXME: other functions with syscall... */
+    #[inline(always)]
+    pub fn remove(&self) -> bool {
+        sys_remove_sem(self.key)
+    }
+
+    #[inline(always)]
+    pub fn signal(&self) -> bool {
+        sys_sem_signal(self.key)
+    }
+
+    #[inline(always)]
+    pub fn wait(&self) -> bool {
+        sys_sem_wait(self.key)
+    }
 }
 
 unsafe impl Sync for Semaphore {}
@@ -52,4 +67,24 @@ macro_rules! semaphore_array {
     [$($x:expr),+ $(,)?] => {
         [ $($crate::Semaphore::new($x),)* ]
     }
+}
+
+#[inline(always)]
+pub fn sys_new_sem(key: u32, value: usize) -> bool {
+    syscall!(Syscall::Sem, 0, key as usize, value) == 0
+}
+
+#[inline(always)]
+pub fn sys_remove_sem(key: u32) -> bool {
+    syscall!(Syscall::Sem, 1, key as usize, 0) == 0
+}
+
+#[inline(always)]
+pub fn sys_sem_signal(key: u32) -> bool {
+    syscall!(Syscall::Sem, 2, key as usize, 0) == 0
+}
+
+#[inline(always)]
+pub fn sys_sem_wait(key: u32) -> bool {
+    syscall!(Syscall::Sem, 3, key as usize, 0) == 0
 }

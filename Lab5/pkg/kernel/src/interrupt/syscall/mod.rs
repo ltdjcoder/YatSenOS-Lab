@@ -73,6 +73,9 @@ pub fn dispatcher(context: &mut ProcessContext) {
             service::wait_pid(&args, context);
         },
 
+        // op: arg0 as u8, key: arg1 as u32, val: arg2 as usize -> ret: any
+        Syscall::Sem => sys_sem(&args, context),
+
         // None
         Syscall::Stat => { stat_process(); },
         // None

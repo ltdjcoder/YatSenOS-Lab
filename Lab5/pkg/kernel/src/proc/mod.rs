@@ -4,7 +4,8 @@ mod manager;
 mod paging;
 mod pid;
 mod process;
-mod processor;
+pub mod processor;
+pub mod sync;
 mod vm;
 
 

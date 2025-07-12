@@ -166,3 +166,71 @@ pub fn wait_pid(args: &SyscallArgs, context: &mut ProcessContext) {
     proc::wait_pid(pid, context);
 }
 
+pub fn new_sem(key: u32, value: usize) -> usize {
+    let pm = get_process_manager();
+    if pm.current().read().new_sem(key, value) {
+        0
+    } else {
+        1
+    }
+}
+
+pub fn remove_sem(key: u32) -> usize {
+    let pm = get_process_manager();
+    if pm.current().read().remove_sem(key) {
+        0
+    } else {
+        1
+    }
+}
+
+pub fn sem_signal(key: u32, context: &mut ProcessContext) {
+    use crate::proc::sync::SemaphoreResult;
+    
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager();
+        let ret = manager.current().read().sem_signal(key);
+        match ret {
+            SemaphoreResult::Ok => context.set_rax(0),
+            SemaphoreResult::NotExist => context.set_rax(1),
+            SemaphoreResult::WakeUp(pid) => {
+                manager.wake_up(pid, None);
+                context.set_rax(0);
+            }
+            _ => unreachable!(),
+        }
+    })
+}
+
+pub fn sem_wait(key: u32, context: &mut ProcessContext) {
+    use crate::proc::sync::SemaphoreResult;
+    
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager();
+        let pid = processor::get_pid();
+        let ret = manager.current().write().sem_wait(key, pid);
+        match ret {
+            SemaphoreResult::Ok => context.set_rax(0),
+            SemaphoreResult::NotExist => context.set_rax(1),
+            SemaphoreResult::Block(pid) => {
+                manager.save_current(context);
+                manager.block(pid);
+                unsafe {
+                    *context = manager.switch_next(context);
+                }
+            }
+            _ => unreachable!(),
+        }
+    })
+}
+
+pub fn sys_sem(args: &SyscallArgs, context: &mut ProcessContext) {
+    match args.arg0 {
+        0 => context.set_rax(new_sem(args.arg1 as u32, args.arg2)),
+        1 => context.set_rax(remove_sem(args.arg1 as u32)),
+        2 => sem_signal(args.arg1 as u32, context),
+        3 => sem_wait(args.arg1 as u32, context),
+        _ => context.set_rax(usize::MAX),
+    }
+}
+
