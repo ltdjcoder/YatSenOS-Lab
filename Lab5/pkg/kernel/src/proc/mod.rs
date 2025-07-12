@@ -164,7 +164,7 @@ pub fn exit(ret: isize, context: &mut ProcessContext) {
 }
 
 pub fn fork(context: &mut ProcessContext) {
-    x86_64::instructions::interrupts::without_interrupts(|| {
+    // x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
 
         // 很诡异啊这个逻辑？FIXME
@@ -185,5 +185,5 @@ pub fn fork(context: &mut ProcessContext) {
         // unsafe {
         //     manager.switch_next(context);
         // }
-    })
+    // })
 }

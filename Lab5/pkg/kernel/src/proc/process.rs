@@ -104,7 +104,7 @@ impl Process {
         let mut inner = self.inner.write();
         
         // FIXME: inner fork with parent weak ref
-        let child_inner = inner.fork(child_pid, Arc::downgrade(self));
+        let child_inner = inner.fork(self.pid.0 as u64, child_pid, Arc::downgrade(self));
 
         // FIXME: make the arc of child
         let child = Arc::new(Process {
@@ -302,12 +302,13 @@ impl core::fmt::Display for Process {
 }
 
 impl ProcessInner {
-    pub fn fork(&mut self, pid: ProcessId, parent: Weak<Process>) -> ProcessInner {
+    pub fn fork(&mut self, old_pid: u64, pid: ProcessId, parent: Weak<Process>) -> ProcessInner {
         // FIXME: fork the process virtual memory struct
         // FIXME: calculate the real stack offset
         let forked_vm = self.vm().fork(pid.0 as u64);
 
         // FIXME: update `rsp` in interrupt stack frame
+        let old_stack_top_addr = super::vm::stack::STACK_MAX - old_pid as u64 * 0x100000000;
         let child_stack_top_addr = super::vm::stack::STACK_MAX - pid.0 as u64 * 0x100000000;
         let child_stack_top = VirtAddr::new(child_stack_top_addr - 8);
         let child_stack_bot_addr = child_stack_top_addr - forked_vm.stack.memory_usage();
@@ -322,6 +323,9 @@ impl ProcessInner {
         let old_code_segment = child_context.stack_frame.code_segment;
         let old_cpu_flags = child_context.stack_frame.cpu_flags;
         let old_stack_segment = child_context.stack_frame.stack_segment;
+
+        let old_stack_pointer = child_context.stack_frame.stack_pointer;
+        let new_stack_pointer = old_stack_pointer + (child_stack_top_addr - old_stack_top_addr);
         
         child_context.as_mut().as_mut_ptr().write(ProcessContextValue {
             regs: old_regs,
@@ -329,7 +333,9 @@ impl ProcessInner {
                 old_instruction_pointer,
                 old_code_segment,
                 old_cpu_flags,
-                child_stack_bot,
+                // child_stack_bot,
+                // VirtAddr::new(0x3ffbffffff30),
+                new_stack_pointer,
                 old_stack_segment,
             ),
         });
