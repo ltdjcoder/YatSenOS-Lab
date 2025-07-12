@@ -5,6 +5,7 @@ mod consts;
 mod exceptions;
 mod clock;
 mod serial;
+mod syscall;
 
 use apic::*;
 use x86_64::structures::idt::InterruptDescriptorTable;
@@ -20,6 +21,8 @@ lazy_static! {
             clock::register_idt(&mut idt);
             // TODO: serial::register_idt(&mut idt);
             serial::register_idt(&mut idt);
+
+            syscall::register_idt(&mut idt);
         }
         idt
     };

@@ -285,6 +285,16 @@ impl ProcessManager {
         pid
     }
 
+    pub fn read(&self, fd: u8, buf: &mut [u8]) -> isize {
+        self.current().read().read(fd, buf)
+    }
+
+    pub fn write(&self, fd: u8, buf: &[u8]) -> isize {
+        self.current().read().write(fd, buf)
+    }
+
+    
+
 }
 
 

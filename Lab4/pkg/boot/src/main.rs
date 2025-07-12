@@ -103,7 +103,7 @@ fn efi_main() -> Status {
         Cr0::write(cr0);
     }
 
-    free_elf(elf);
+    // free_elf(elf);
 
     // 5. Pass system table to kernel
     let ptr = uefi::table::system_table_raw().expect("Failed to get system table");

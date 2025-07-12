@@ -12,8 +12,11 @@ use alloc::format;
 pub use macros::*;
 pub use regs::*;
 
+pub mod resource;
+
 use crate::utils;
 use crate::proc::*;
+
 
 pub const fn get_ascii_header() -> &'static str {
     concat!(

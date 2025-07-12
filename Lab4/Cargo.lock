@@ -371,6 +371,7 @@ dependencies = [
  "x86_64",
  "ysos_boot",
  "ysos_elf",
+ "ysos_syscall",
 ]
 
 [[package]]

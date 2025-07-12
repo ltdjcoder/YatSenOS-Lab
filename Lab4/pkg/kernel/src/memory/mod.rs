@@ -7,6 +7,8 @@ pub mod gdt;
 pub use address::*;
 pub use frames::*;
 
+pub mod user;
+
 use crate::humanized_size;
 
 pub fn init(boot_info: &'static boot::BootInfo) {

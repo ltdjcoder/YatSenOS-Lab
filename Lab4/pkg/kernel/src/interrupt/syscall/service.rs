@@ -1,8 +1,8 @@
 use core::alloc::Layout;
 
+use crate::proc;
 use crate::proc::*;
 use crate::utils::*;
-
 use super::SyscallArgs;
 
 pub fn spawn_process(args: &SyscallArgs) -> usize {
@@ -22,17 +22,46 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
     // FIXME: call proc::write -> isize
     // FIXME: return the result as usize
 
-    0
+    let fd = args.arg0 as u8;
+    let buf_ptr = args.arg1 as *const u8;
+    let buf_len = args.arg2;
+
+
+    let buf = unsafe { core::slice::from_raw_parts(buf_ptr, buf_len) };
+
+    let result = crate::proc::write(fd, buf);
+    
+    if result < 0 {
+        0  
+    } else {
+        result as usize
+    }
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
     // FIXME: just like sys_write
 
-    0
+    let fd = args.arg0 as u8;
+    let buf_ptr = args.arg1 as *mut u8;
+    let buf_len = args.arg2;
+
+    let buf = unsafe { core::slice::from_raw_parts_mut(buf_ptr, buf_len) };
+
+
+    let result = crate::proc::read(fd, buf);
+    
+    if result < 0 {
+        0  // Return 0 on error or no data available
+    } else {
+        result as usize
+    }
 }
 
 pub fn exit_process(args: &SyscallArgs, context: &mut ProcessContext) {
     // FIXME: exit process with retcode
+    let ret = args.arg0 as isize;
+    info!("Exiting process with return code: {}", ret);
+    proc::exit(ret, context);
 }
 
 pub fn list_process() {

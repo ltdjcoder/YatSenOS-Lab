@@ -1,4 +1,4 @@
-use log::{Metadata, Record, Level};
+use log::{max_level, Level, Metadata, Record};
 
 /// 初始化日志系统
 pub fn init() {
@@ -6,7 +6,8 @@ pub fn init() {
     log::set_logger(&LOGGER).unwrap();
 
     // FIX-ME: Configure the logger
-    log::set_max_level(log::LevelFilter::Info);
+    // log::set_max_level(log::LevelFilter::Info);
+    log::set_max_level(log::LevelFilter::Trace);
 
     info!("Logger Initialized.");
 }
@@ -15,7 +16,7 @@ struct Logger;
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Info
+        metadata.level() <= max_level()
     }
 
 

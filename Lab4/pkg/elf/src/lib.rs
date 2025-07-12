@@ -79,6 +79,49 @@ pub fn map_range(
     Ok(Page::range(range_start, range_end))
 }
 
+/// Map a range of memory with custom flags
+/// 
+/// allocate frames and map to specified address with custom page table flags
+pub fn map_range_with_flags(
+    addr: u64,
+    count: u64,
+    flags: PageTableFlags,
+    page_table: &mut impl Mapper<Size4KiB>,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+) -> Result<PageRange, MapToError<Size4KiB>> {
+    let range_start = Page::containing_address(VirtAddr::new(addr));
+    let range_end = range_start + count;
+
+    trace!(
+        "Page Range: {:?}({}) with flags: {:?}",
+        Page::range(range_start, range_end),
+        count,
+        flags
+    );
+
+    for page in Page::range(range_start, range_end) {
+        let frame = frame_allocator
+            .allocate_frame()
+            .ok_or(MapToError::FrameAllocationFailed)?;
+        unsafe {
+            page_table
+                .map_to(page, frame, flags, frame_allocator)?
+                .flush();
+        }
+    }
+
+    trace!(
+        "Map hint: {:#x} -> {:#x}",
+        addr,
+        page_table
+            .translate_page(range_start)
+            .unwrap()
+            .start_address()
+    );
+
+    Ok(Page::range(range_start, range_end))
+}
+
 /// Load & Map ELF file
 ///
 /// load segments in ELF file to new frames and set page table
@@ -92,7 +135,7 @@ pub fn load_elf(
     trace!("Loading ELF file...{:?}", elf.input.as_ptr());
 
     for segment in elf.program_iter() {
-        if segment.get_type().unwrap() != program::Type::Load {
+        if segment.get_type().unwrap_or(program::Type::Null) != program::Type::Load {
             continue;
         }
 
@@ -221,5 +264,12 @@ fn load_segment(
         }
     }
 
+
+    trace!(
+        "Mapped segment: {:#x?} to {:#x?} with flags: {:?}",
+        segment.virtual_addr(),
+        virt_start_addr,
+        page_table_flags
+    );
     Ok(())
 }

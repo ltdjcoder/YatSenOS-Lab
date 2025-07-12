@@ -67,7 +67,7 @@ impl ProcessVm {
             mapper,
             alloc,
             true, // user_access = true for user processes
-        ).expect("Failed to load ELF in ProcessVm");
+        );//.expect("Failed to load ELF in ProcessVm");
     }
 
     pub(super) fn memory_usage(&self) -> u64 {
