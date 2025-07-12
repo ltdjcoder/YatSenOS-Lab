@@ -74,7 +74,7 @@ impl ProcessVm {
         self.stack.memory_usage()
     }
 
-    pub fn fork(&self, stack_offset_count: u64) -> Self {
+    pub fn fork(&self, pid: u64) -> Self {
         // clone the page table context (see instructions)
         let owned_page_table = self.page_table.fork();
 
@@ -83,7 +83,7 @@ impl ProcessVm {
 
         Self {
             page_table: owned_page_table,
-            stack: self.stack.fork(mapper, alloc, stack_offset_count),
+            stack: self.stack.fork(mapper, alloc, pid),
         }
     }
 }

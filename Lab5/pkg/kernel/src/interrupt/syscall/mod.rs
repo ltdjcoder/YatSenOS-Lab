@@ -77,7 +77,9 @@ pub fn dispatcher(context: &mut ProcessContext) {
         // None
         Syscall::ListApp => { list_apps(); },
 
-        Syscall::Fork => { /* ... */},
+        Syscall::Fork => { 
+            crate::proc::fork(context);
+        },
 
         // ----------------------------------------------------
         // NOTE: following syscall examples are implemented

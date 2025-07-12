@@ -110,6 +110,9 @@ pub fn map_range_with_flags(
         }
     }
 
+    // while(page_table
+    //         .translate_page(range_start))
+
     trace!(
         "Map hint: {:#x} -> {:#x}",
         addr,
@@ -118,6 +121,8 @@ pub fn map_range_with_flags(
             .unwrap()
             .start_address()
     );
+
+
 
     Ok(Page::range(range_start, range_end))
 }

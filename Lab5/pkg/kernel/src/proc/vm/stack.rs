@@ -1,3 +1,5 @@
+
+use alloc::fmt::format;
 use x86_64::{
     structures::paging::{mapper::MapToError, page::*, Page},
     VirtAddr,
@@ -158,7 +160,7 @@ impl Stack {
                 | x86_64::structures::paging::PageTableFlags::USER_ACCESSIBLE,
             mapper,
             alloc,
-        )?;
+        ).expect("Failed to map stack");
 
         // Update stack info
         self.range = Page::range(fault_page, self.range.end);
@@ -178,13 +180,64 @@ impl Stack {
         stack_offset_count: u64,
     ) -> Self {
         // FIXME: alloc & map new stack for child (see instructions)
+        // Calculate new stack address based on offset
+        let new_stack_offset = stack_offset_count * 0x100000000; // 4GiB offset
+        let new_stack_top_addr = STACK_MAX - new_stack_offset;
+        let new_stack_bot_addr = new_stack_top_addr - (self.usage * crate::memory::PAGE_SIZE);
+        info!(
+            "Forking stack: new_stack_top_addr = {:#x}, new_stack_bot_addr = {:#x}, usage = {}",
+            new_stack_top_addr,
+            new_stack_bot_addr,
+            self.usage
+        );
+        
+
+        // Create new stack range
+        let new_stack_bot_page = Page::<Size4KiB>::containing_address(VirtAddr::new(new_stack_bot_addr));
+        let new_stack_top_page = Page::<Size4KiB>::containing_address(VirtAddr::new(new_stack_top_addr));
+        
+        // Map new stack pages
+        let stack_flags = x86_64::structures::paging::PageTableFlags::PRESENT 
+            | x86_64::structures::paging::PageTableFlags::WRITABLE
+            | x86_64::structures::paging::PageTableFlags::USER_ACCESSIBLE;
+        
+        if elf::map_range_with_flags(
+            new_stack_bot_addr,
+            self.usage,
+            stack_flags,
+            mapper,
+            alloc,
+        ).is_err(){
+            info!("Failed to map new stack for child process");
+        }
 
         // FIXME: copy the *entire stack* from parent to child
+        self.clone_range(
+            self.range.start.start_address().as_u64(),
+            new_stack_bot_addr,
+            self.usage * crate::memory::PAGE_SIZE / Size4KiB::SIZE,
+        );
 
         // FIXME: return the new stack
         Self {
-            range: /* new stack range */,
-            usage: /* new stack usage */
+            range: Page::range(new_stack_bot_page, new_stack_top_page + 1),
+            usage: self.usage,
+        }
+    }
+    
+    /// Clone a range of memory
+    ///
+    /// - `src_addr`: the address of the source memory
+    /// - `dest_addr`: the address of the target memory
+    /// - `size`: the count of pages to be cloned
+    fn clone_range(&self, cur_addr: u64, dest_addr: u64, size: u64) {
+        trace!("Clone range: {:#x} -> {:#x}", cur_addr, dest_addr);
+        unsafe {
+            core::ptr::copy_nonoverlapping::<u64>(
+                cur_addr as *mut u64,
+                dest_addr as *mut u64,
+                (size * Size4KiB::SIZE / 8) as usize,
+            );
         }
     }
 }

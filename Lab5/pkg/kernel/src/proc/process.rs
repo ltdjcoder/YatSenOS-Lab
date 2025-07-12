@@ -1,17 +1,15 @@
-use core::mem::take;
+use alloc::format;
 
 use super::*;
-use crate::memory::*;
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use spin::*;
-use x86_64::structures::paging::mapper::MapToError;
-use x86_64::structures::paging::page::PageRange;
-use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
 use x86_64::registers::control::Cr3;
 use crate::proc::paging::PageTableContext;
 use crate::proc::ProcessContext;
+use crate::proc::context::ProcessContextValue;
+use x86_64::structures::idt::InterruptStackFrameValue;
 use x86_64::instructions::tlb;
 
 
@@ -100,16 +98,31 @@ impl Process {
     }
 
     pub fn fork(self: &Arc<Self>) -> Arc<Self> {
-        // FIXME: lock inner as write
-        // FIXME: inner fork with parent weak ref
+        let child_pid = ProcessId::new();
 
-        // FOR DBG: maybe print the child process info
-        //          e.g. parent, name, pid, etc.
+        // FIXME: lock inner as write
+        let mut inner = self.inner.write();
+        
+        // FIXME: inner fork with parent weak ref
+        let child_inner = inner.fork(child_pid, Arc::downgrade(self));
 
         // FIXME: make the arc of child
+        let child = Arc::new(Process {
+            pid: child_pid,
+            inner: Arc::new(RwLock::new(child_inner)),
+        });
+
+        trace!("Fork child process: parent={}, child={}, name={}", self.pid.0, child.pid.0, child.inner.read().name);
+
         // FIXME: add child to current process's children list
+        inner.children.push(child.clone());
+
         // FIXME: set fork ret value for parent with `context.set_rax`
+        inner.context.set_rax(child.pid.0 as usize);
+
         // FIXME: mark the child as ready & return it
+        child.write().set_status(ProgramStatus::Ready);
+        child
     }
 }
 
@@ -289,15 +302,56 @@ impl core::fmt::Display for Process {
 }
 
 impl ProcessInner {
-    pub fn fork(&mut self, parent: Weak<Process>) -> ProcessInner {
+    pub fn fork(&mut self, pid: ProcessId, parent: Weak<Process>) -> ProcessInner {
         // FIXME: fork the process virtual memory struct
         // FIXME: calculate the real stack offset
+        let forked_vm = self.vm().fork(pid.0 as u64);
+
         // FIXME: update `rsp` in interrupt stack frame
+        let child_stack_top_addr = super::vm::stack::STACK_MAX - pid.0 as u64 * 0x100000000;
+        let child_stack_top = VirtAddr::new(child_stack_top_addr - 8);
+        let child_stack_bot_addr = child_stack_top_addr - forked_vm.stack.memory_usage();
+        let child_stack_bot = VirtAddr::new(child_stack_bot_addr);
+        
+        // Create new context based on parent's context
+        let mut child_context = self.context.clone();
+        
+        // 先读取需要的值，避免借用冲突
+        let old_regs = child_context.as_ref().as_ptr().read().regs;
+        let old_instruction_pointer = child_context.stack_frame.instruction_pointer;
+        let old_code_segment = child_context.stack_frame.code_segment;
+        let old_cpu_flags = child_context.stack_frame.cpu_flags;
+        let old_stack_segment = child_context.stack_frame.stack_segment;
+        
+        child_context.as_mut().as_mut_ptr().write(ProcessContextValue {
+            regs: old_regs,
+            stack_frame: InterruptStackFrameValue::new(
+                old_instruction_pointer,
+                old_code_segment,
+                old_cpu_flags,
+                child_stack_bot,
+                old_stack_segment,
+            ),
+        });
+        
         // FIXME: set the return value 0 for child with `context.set_rax`
+        child_context.set_rax(0);
 
         // FIXME: clone the process data struct
+        let child_data = self.proc_data.clone();
 
         // FIXME: construct the child process inner
+        ProcessInner {
+            name: format!("{}_child", self.name),
+            parent: Some(parent),
+            children: Vec::new(),
+            ticks_passed: 0,
+            status: ProgramStatus::Ready,
+            context: child_context,
+            exit_code: None,
+            proc_data: child_data,
+            proc_vm: Some(forked_vm),
+        }
 
         // NOTE: return inner because there's no pid record in inner
     }

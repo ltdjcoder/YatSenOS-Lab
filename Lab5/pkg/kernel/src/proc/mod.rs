@@ -166,9 +166,24 @@ pub fn exit(ret: isize, context: &mut ProcessContext) {
 pub fn fork(context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
+
+        // 很诡异啊这个逻辑？FIXME
         // FIXME: save_current as parent
+        manager.save_current(context);
+        
         // FIXME: fork to get child
+        let _child_pid = manager.fork();
+
+        // Update context with current process's context
+        *context = manager.current().write().get_proc_context().clone();
+        
         // FIXME: push to child & parent to ready queue
+        // Child is already added to ready queue in manager.fork()
+        manager.push_ready(processor::get_pid()); // Add parent back to ready queue
+        
         // FIXME: switch to next process
+        // unsafe {
+        //     manager.switch_next(context);
+        // }
     })
 }

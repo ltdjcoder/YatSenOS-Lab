@@ -181,7 +181,7 @@ impl ProcessManager {
         let current_proc = self.current();
         // let mut proc_writer = current_proc.write();
         // 检查缺页异常是否是由于写入一个不存在的页面引起的
-        // info!("Handling page fault at {:#?} with error code: {:?}", addr, err_code);
+        info!("Handling page fault at {:#?} with error code: {:?}", addr, err_code);
         if !err_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)
         {
             // 我们只处理由写入操作引起的缺页异常
@@ -297,14 +297,24 @@ impl ProcessManager {
         self.current().read().write(fd, buf)
     }
 
-    pub fn fork(&self) {
+    pub fn fork(&self) -> ProcessId {
         // FIXME: get current process
+        let current_proc = self.current();
+        
         // FIXME: fork to get child
+        let child_proc = current_proc.fork();
+        let child_pid = child_proc.pid();
+        
         // FIXME: add child to process list
+        self.add_proc(child_pid, child_proc.clone());
+        
+        // Add child to ready queue
+        self.push_ready(child_pid);
 
-        // FOR DBG: maybe print the process ready queue?
+        trace!("Fork completed: parent={}, child={}", current_proc.pid().0, child_pid.0);
+        
+        child_pid
     }
-
 }
 
 
