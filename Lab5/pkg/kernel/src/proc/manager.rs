@@ -35,6 +35,7 @@ pub struct ProcessManager {
     processes: RwLock<BTreeMap<ProcessId, Arc<Process>>>,
     ready_queue: Mutex<VecDeque<ProcessId>>,
     app_list: Option<&'static ArrayVec<App<'static>, 16>>,//FIXME
+    wait_queue: Mutex<BTreeMap<ProcessId, BTreeSet<ProcessId>>>,
 }
 
 impl ProcessManager {
@@ -50,7 +51,45 @@ impl ProcessManager {
             processes: RwLock::new(processes),
             ready_queue: Mutex::new(ready_queue),
             app_list,
+            wait_queue: Mutex::new(BTreeMap::new()),
         }
+    }
+
+    /// Block the process with the given pid
+    pub fn block(&self, pid: ProcessId) {
+        if let Some(proc) = self.get_proc(&pid) {
+            proc.write().block();
+        }
+    }
+
+    pub fn wait_pid(&self, pid: ProcessId) {
+        let mut wait_queue = self.wait_queue.lock();
+        // FIXME: push the current process to the wait queue
+        //        `processor::get_pid()` is waiting for `pid`
+        wait_queue.entry(pid).or_default().insert(processor::get_pid());
+    }
+
+    /// Wake up the process with the given pid
+    ///
+    /// If `ret` is `Some`, set the return value of the process
+    pub fn wake_up(&self, pid: ProcessId, ret: Option<isize>) {
+        if let Some(proc) = self.get_proc(&pid) {
+            let mut inner = proc.write();
+            if let Some(ret) = ret {
+                // FIXME: set the return value of the process
+                //        like `context.set_rax(ret as usize)`
+                inner.set_ret(ret);
+            }
+            // FIXME: set the process as ready
+            inner.ready();
+            // FIXME: push to ready queue
+            drop(inner);
+            self.push_ready(pid);
+        }
+    }
+
+    pub fn get_exit_code(&self, pid: ProcessId) -> Option<isize> {
+        self.get_proc(&pid)?.read().exit_code()
     }
 
     #[inline]
@@ -219,6 +258,13 @@ impl ProcessManager {
         trace!("Kill {:#?}", &proc);
 
         proc.kill(ret);
+
+        // Wake up processes waiting for this pid
+        if let Some(pids) = self.wait_queue.lock().remove(&pid) {
+            for waiting_pid in pids {
+                self.wake_up(waiting_pid, Some(ret));
+            }
+        }
     }
 
     pub fn print_process_list(&self) {

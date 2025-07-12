@@ -97,6 +97,22 @@ pub fn process_exit(ret: isize) -> ! {
     }
 }
 
+pub fn wait_pid(pid: ProcessId, context: &mut ProcessContext) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager();
+        if let Some(ret) = manager.get_exit_code(pid) {
+            context.set_rax(ret as usize);
+        } else {
+            manager.wait_pid(pid);
+            manager.save_current(context);
+            manager.current().write().block();
+            unsafe {
+                *context = manager.switch_next(context);
+            }
+        }
+    })
+}
+
 pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
     // x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager().handle_page_fault(addr, err_code)

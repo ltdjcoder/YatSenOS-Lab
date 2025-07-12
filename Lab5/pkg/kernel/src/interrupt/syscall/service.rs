@@ -152,26 +152,17 @@ pub fn sys_deallocate(args: &SyscallArgs) {
     }
 }
 
-pub fn wait_pid(args: &SyscallArgs) -> usize {
+pub fn wait_pid(args: &SyscallArgs, context: &mut ProcessContext) {
     // FIXME: check if the process is running or get retcode
     let pid = ProcessId(args.arg0 as u16);
     
-    // Get the process
-    if let Some(proc) = get_process_manager().get_proc(&pid) {
-        let proc_inner = proc.read();
-        
-        // Check if the process is dead and return exit code
-        if proc_inner.status() == ProgramStatus::Dead {
-            if let Some(exit_code) = proc_inner.exit_code() {
-                return exit_code as usize;
-            }
-        }
-        
-        // Process is still running or blocked, return a special value
-        // In a real implementation, this would block until the process exits
-        return usize::MAX; // Indicates process is still running
+    // Check if the process has already exited
+    if let Some(exit_code) = get_process_manager().get_exit_code(pid) {
+        context.set_rax(exit_code as usize);
+        return;
     }
     
-    0 // Process not found
+    // Process is still running, block current process and wait
+    proc::wait_pid(pid, context);
 }
 

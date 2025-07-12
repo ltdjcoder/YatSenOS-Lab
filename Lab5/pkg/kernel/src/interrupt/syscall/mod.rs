@@ -6,7 +6,6 @@ use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 use syscall_def::Syscall;
 
 mod service;
-use super::consts;
 
 // FIXME: write syscall service handler in `service.rs`
 use service::*;
@@ -15,10 +14,12 @@ pub unsafe fn register_idt(idt: &mut InterruptDescriptorTable) {
     // FIXME: register syscall handler to IDT
     //        - standalone syscall stack
     //        - ring 3
-    idt[Interrupts::Syscall as u8]
-        .set_handler_fn(syscall_handler)
-        .set_stack_index(gdt::SYSCALL_INTERRUPT_IST_INDEX)
-        .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
+    unsafe {
+        idt[Interrupts::Syscall as u8]
+            .set_handler_fn(syscall_handler)
+            .set_stack_index(gdt::SYSCALL_INTERRUPT_IST_INDEX)
+            .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
+    }
 }
 
 pub extern "C" fn syscall(mut context: ProcessContext) {
@@ -69,7 +70,7 @@ pub fn dispatcher(context: &mut ProcessContext) {
         },
         // pid: arg0 as u16 -> status: isize
         Syscall::WaitPid => { /* FIXME: check if the process is running or get retcode */
-            context.set_rax(wait_pid(&args));
+            service::wait_pid(&args, context);
         },
 
         // None

@@ -7,7 +7,7 @@ pub fn init() {
 
     // FIX-ME: Configure the logger
     // log::set_max_level(log::LevelFilter::Info);
-    log::set_max_level(log::LevelFilter::Trace);
+    log::set_max_level(log::LevelFilter::Info);
 
     info!("Logger Initialized.");
 }
