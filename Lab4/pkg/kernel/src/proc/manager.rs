@@ -93,10 +93,10 @@ impl ProcessManager {
         // self.current().write().set_status(ProgramStatus::Ready);
         if(self.current().read().status() == ProgramStatus::Running) {
             self.current().write().pause();
+            self.save_current(context);
+            self.ready_queue.lock().push_back(processor::get_pid());
         }
         
-        self.save_current(context);
-        self.ready_queue.lock().push_back(processor::get_pid());
 
         // FIX-ME: fetch the next process from ready queue
         let mut ready_queue = self.ready_queue.lock();
@@ -169,6 +169,8 @@ impl ProcessManager {
         // FIXME: return new process pid
         pid
     }
+
+    
 
     pub fn kill_current(&self, ret: isize) {
         self.kill(processor::get_pid(), ret);

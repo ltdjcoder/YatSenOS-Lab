@@ -60,14 +60,10 @@ pub fn wait(pid: ProcessId) {
 
         // HINT: it's better to use the exit code
         /* FIXME: is the process exited? */
-        info!("Waiting for process {}#{} to exit...111", pid, pid);
         if let Some(proc) = get_process_manager().get_proc(&pid)   {
-            info!("Waiting for process {}#{} to exit...", proc.as_ref().read().name(), pid);
             if(proc.as_ref().read().status() == ProgramStatus::Dead) {
-                info!("Process {}#{} exited.", proc.as_ref().read().name(), pid);
                 break;
             }
-            info!("Process {}#{} is still running.", proc.as_ref().read().name(), pid);
             x86_64::instructions::hlt();
         } else {
             break;

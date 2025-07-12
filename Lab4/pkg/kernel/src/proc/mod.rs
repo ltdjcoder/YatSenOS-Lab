@@ -159,6 +159,6 @@ pub fn exit(ret: isize, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         // FIXME: implement this for ProcessManager
         get_process_manager().kill_current(ret);
-        unsafe { get_process_manager().switch_next(context) };
+        // unsafe { get_process_manager().switch_next(context) };
     })
 }

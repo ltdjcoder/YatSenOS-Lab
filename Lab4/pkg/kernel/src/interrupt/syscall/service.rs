@@ -1,4 +1,5 @@
 use core::alloc::Layout;
+use core::clone;
 
 use crate::proc;
 use crate::proc::*;
@@ -59,10 +60,16 @@ pub fn sys_read(args: &SyscallArgs) -> usize {
 
 pub fn exit_process(args: &SyscallArgs, context: &mut ProcessContext) {
     // FIXME: exit process with retcode
+    // Get the exit code from the syscall arguments
+    // proc::exit(ret, context);
     let ret = args.arg0 as isize;
     info!("Exiting process with return code: {}", ret);
-    proc::exit(ret, context);
-    unsafe { get_process_manager().switch_next(context); }
+    
+    unsafe { 
+        // get_process_manager().current().write().set_status(ProgramStatus::Dead); 
+        proc::exit(ret, context);
+        *context = get_process_manager().switch_next(context);
+    }
 }
 
 pub fn list_process() {

@@ -10,7 +10,7 @@ macro_rules! entry {
             let ret = $fn();
             // FIXME: after syscall, add lib::sys_exit(ret);
             lib::sys_exit(ret);
-            loop {}
+            // loop {}
         }
     };
 }

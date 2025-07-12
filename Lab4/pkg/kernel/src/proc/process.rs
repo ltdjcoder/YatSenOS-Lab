@@ -205,9 +205,9 @@ impl ProcessInner {
         self.status = ProgramStatus::Dead;
 
         // take(&mut self.proc_vm);
-        // &mut self.proc_data.take();
-        // self.proc_vm = None;
-        // self.proc_data = None;
+        // self.proc_data.take();
+        self.proc_vm = None;
+        self.proc_data = None;
     }
 
     pub fn get_proc_context(& mut self) -> & mut ProcessContext {

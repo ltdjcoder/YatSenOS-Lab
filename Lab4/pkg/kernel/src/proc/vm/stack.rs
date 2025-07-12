@@ -108,9 +108,9 @@ impl Stack {
         mapper: MapperRef,
         alloc: FrameAllocatorRef,
     ) -> bool {
-        if !self.is_on_stack(addr) {
-            return false;
-        }
+        // if !self.is_on_stack(addr) {
+        //     return false;
+        // }
 
         if let Err(m) = self.grow_stack(addr, mapper, alloc) {
             error!("Grow stack failed: {:?}", m);

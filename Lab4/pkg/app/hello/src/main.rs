@@ -8,6 +8,10 @@ extern crate lib;
 fn main() -> isize {
     println!("Hello, world!!!");
 
+    // while(true){
+
+    // }
+
     233
 }
 
