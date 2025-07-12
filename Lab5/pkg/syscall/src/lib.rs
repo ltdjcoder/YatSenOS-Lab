@@ -21,6 +21,8 @@ pub enum Syscall {
     Allocate = 65533,
     Deallocate = 65534,
 
+    Fork = 58,
+
     #[num_enum(default)]
     Unknown = 65535,
 }

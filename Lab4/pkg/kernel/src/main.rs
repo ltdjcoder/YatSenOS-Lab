@@ -5,7 +5,7 @@ use log::info;
 use ysos::*;
 use ysos_kernel::{self as ysos, proc::ProcessId};
 
-extern crate alloc;
+// extern crate alloc;
 
 boot::entry_point!(kernel_main);
 

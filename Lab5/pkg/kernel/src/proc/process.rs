@@ -98,6 +98,19 @@ impl Process {
     pub fn alloc_init_stack(&self) -> VirtAddr {
         self.write().vm_mut().init_proc_stack(self.pid)
     }
+
+    pub fn fork(self: &Arc<Self>) -> Arc<Self> {
+        // FIXME: lock inner as write
+        // FIXME: inner fork with parent weak ref
+
+        // FOR DBG: maybe print the child process info
+        //          e.g. parent, name, pid, etc.
+
+        // FIXME: make the arc of child
+        // FIXME: add child to current process's children list
+        // FIXME: set fork ret value for parent with `context.set_rax`
+        // FIXME: mark the child as ready & return it
+    }
 }
 
 impl ProcessInner {
@@ -272,5 +285,20 @@ impl core::fmt::Display for Process {
             inner.status
         )?;
         Ok(())
+    }
+}
+
+impl ProcessInner {
+    pub fn fork(&mut self, parent: Weak<Process>) -> ProcessInner {
+        // FIXME: fork the process virtual memory struct
+        // FIXME: calculate the real stack offset
+        // FIXME: update `rsp` in interrupt stack frame
+        // FIXME: set the return value 0 for child with `context.set_rax`
+
+        // FIXME: clone the process data struct
+
+        // FIXME: construct the child process inner
+
+        // NOTE: return inner because there's no pid record in inner
     }
 }

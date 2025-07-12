@@ -297,7 +297,13 @@ impl ProcessManager {
         self.current().read().write(fd, buf)
     }
 
-    
+    pub fn fork(&self) {
+        // FIXME: get current process
+        // FIXME: fork to get child
+        // FIXME: add child to process list
+
+        // FOR DBG: maybe print the process ready queue?
+    }
 
 }
 

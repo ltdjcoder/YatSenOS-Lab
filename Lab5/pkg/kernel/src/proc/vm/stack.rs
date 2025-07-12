@@ -170,6 +170,23 @@ impl Stack {
     pub fn memory_usage(&self) -> u64 {
         self.usage * crate::memory::PAGE_SIZE
     }
+
+    pub fn fork(
+        &self,
+        mapper: MapperRef,
+        alloc: FrameAllocatorRef,
+        stack_offset_count: u64,
+    ) -> Self {
+        // FIXME: alloc & map new stack for child (see instructions)
+
+        // FIXME: copy the *entire stack* from parent to child
+
+        // FIXME: return the new stack
+        Self {
+            range: /* new stack range */,
+            usage: /* new stack usage */
+        }
+    }
 }
 
 impl core::fmt::Debug for Stack {

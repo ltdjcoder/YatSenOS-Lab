@@ -162,3 +162,13 @@ pub fn exit(ret: isize, context: &mut ProcessContext) {
         // unsafe { get_process_manager().switch_next(context) };
     })
 }
+
+pub fn fork(context: &mut ProcessContext) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager();
+        // FIXME: save_current as parent
+        // FIXME: fork to get child
+        // FIXME: push to child & parent to ready queue
+        // FIXME: switch to next process
+    })
+}
