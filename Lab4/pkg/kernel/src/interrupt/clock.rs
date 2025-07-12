@@ -30,7 +30,7 @@ pub unsafe fn register_idt(idt: &mut InterruptDescriptorTable) {
 
 pub unsafe extern "C" fn clock_interrupt(mut context: ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        info!("Clock interrupt happen.");
+        // info!("Clock interrupt happen.");
         // proc::switch(&mut context);
         context = get_process_manager().switch_next(&mut context);
         super::ack();
