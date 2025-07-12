@@ -38,4 +38,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     }
 
     info!("Frame Allocator initialized.");
+    
+    // Initialize user heap
+    user::init();
 }

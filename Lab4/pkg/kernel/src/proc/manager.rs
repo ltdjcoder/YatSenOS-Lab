@@ -179,18 +179,18 @@ impl ProcessManager {
         let current_proc = self.current();
         // let mut proc_writer = current_proc.write();
         // 检查缺页异常是否是由于写入一个不存在的页面引起的
-        info!("Handling page fault at {:#?} with error code: {:?}", addr, err_code);
+        // info!("Handling page fault at {:#?} with error code: {:?}", addr, err_code);
         if !err_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)
         {
             // 我们只处理由写入操作引起的缺页异常
             info!("Page fault not caused by write operation, ignoring.");
-            return false;
+            return true;
         }
 
-        // if(err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)) {
-        //     info!("Page fault caused by protection violation, ignoring.");
-        //     return false;
-        // }
+        if(err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)) {
+            info!("Page fault caused by protection violation, ignoring.");
+            return false;
+        }
 
         if let vm = current_proc.as_ref().write().vm_mut() {
             return vm.handle_page_fault(addr);

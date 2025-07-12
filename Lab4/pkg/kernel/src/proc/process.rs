@@ -1,3 +1,5 @@
+use core::mem::take;
+
 use super::*;
 use crate::memory::*;
 use alloc::sync::{Arc, Weak};
@@ -81,16 +83,16 @@ impl Process {
     }
 
     pub fn kill(&self, ret: isize) {
-        let mut inner = self.inner.write();
+        // let mut inner = self.inner.write();
 
         debug!(
             "Killing process {}#{} with ret code: {}",
-            inner.name(),
+            self.inner.write().name(),
             self.pid,
             ret
         );
 
-        inner.kill(ret);
+        self.inner.write().kill(ret);
     }
 
     pub fn alloc_init_stack(&self) -> VirtAddr {
@@ -201,8 +203,11 @@ impl ProcessInner {
     pub fn kill(&mut self, ret: isize) {
         self.exit_code = Some(ret);
         self.status = ProgramStatus::Dead;
-        self.proc_vm = None;
-        self.proc_data = None;
+
+        // take(&mut self.proc_vm);
+        // &mut self.proc_data.take();
+        // self.proc_vm = None;
+        // self.proc_data = None;
     }
 
     pub fn get_proc_context(& mut self) -> & mut ProcessContext {

@@ -135,10 +135,10 @@ pub fn spawn(name: &str) -> Option<ProcessId> {
 
 pub fn elf_spawn(name: String, elf: &ElfFile) -> Option<ProcessId> {
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
-        let manager = get_process_manager();
+        // let manager = get_process_manager();
         let process_name = name.to_lowercase();
-        let parent = Arc::downgrade(&manager.current());
-        let pid = manager.spawn(elf, name, Some(parent), None);
+        let parent = Arc::downgrade(&get_process_manager().current());
+        let pid = get_process_manager().spawn(elf, name, Some(parent), None);
 
         info!("Spawned process: {}#{}", process_name, pid);
         pid
@@ -157,9 +157,8 @@ pub fn write(fd: u8, buf: &[u8]) -> isize {
 
 pub fn exit(ret: isize, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        let manager = get_process_manager();
         // FIXME: implement this for ProcessManager
-        manager.kill_current(ret);
-        unsafe { manager.switch_next(context) };
+        get_process_manager().kill_current(ret);
+        unsafe { get_process_manager().switch_next(context) };
     })
 }

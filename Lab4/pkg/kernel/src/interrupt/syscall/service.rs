@@ -62,6 +62,7 @@ pub fn exit_process(args: &SyscallArgs, context: &mut ProcessContext) {
     let ret = args.arg0 as isize;
     info!("Exiting process with return code: {}", ret);
     proc::exit(ret, context);
+    unsafe { get_process_manager().switch_next(context); }
 }
 
 pub fn list_process() {

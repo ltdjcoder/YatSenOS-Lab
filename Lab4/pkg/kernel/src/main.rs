@@ -10,7 +10,12 @@ boot::entry_point!(kernel_main);
 
 pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
     ysos::init(boot_info);
-    ysos::wait(spawn_init());
+    // ysos::wait(spawn_init());
+    // ysos::wait(ProcessId(3));
+    spawn_init();
+    loop {
+        
+    }
     ysos::shutdown();
 }
 

@@ -84,8 +84,18 @@ impl Stack {
         let stack_top_addr = STACK_MAX - stack_offset;
         let stack_bot_addr = stack_top_addr - STACK_DEF_SIZE;
 
-        // Map the default stack page
-        self.range = elf::map_range(stack_bot_addr, STACK_DEF_PAGE, mapper, alloc).unwrap();
+        // Map the default stack page with user access permissions
+        let stack_flags = x86_64::structures::paging::PageTableFlags::PRESENT 
+            | x86_64::structures::paging::PageTableFlags::WRITABLE
+            | x86_64::structures::paging::PageTableFlags::USER_ACCESSIBLE;
+        
+        self.range = elf::map_range_with_flags(
+            stack_bot_addr, 
+            STACK_DEF_PAGE, 
+            stack_flags,
+            mapper, 
+            alloc
+        ).unwrap();
         self.usage = STACK_DEF_PAGE;
 
         // Return stack top address (aligned to 8 bytes)
@@ -140,9 +150,12 @@ impl Stack {
         let pages_to_map = Page::range(fault_page, stack_bot);
         let num_pages_to_map = pages_to_map.count() as u64;
 
-        elf::map_range(
+        elf::map_range_with_flags(
             fault_page.start_address().as_u64(),
             num_pages_to_map,
+            x86_64::structures::paging::PageTableFlags::PRESENT 
+                | x86_64::structures::paging::PageTableFlags::WRITABLE
+                | x86_64::structures::paging::PageTableFlags::USER_ACCESSIBLE,
             mapper,
             alloc,
         )?;
