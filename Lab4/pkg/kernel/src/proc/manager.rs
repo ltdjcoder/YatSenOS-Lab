@@ -183,12 +183,14 @@ impl ProcessManager {
         if !err_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)
         {
             // 我们只处理由写入操作引起的缺页异常
+            info!("Page fault not caused by write operation, ignoring.");
             return false;
         }
 
-        if(err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)) {
-            return false;
-        }
+        // if(err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)) {
+        //     info!("Page fault caused by protection violation, ignoring.");
+        //     return false;
+        // }
 
         if let vm = current_proc.as_ref().write().vm_mut() {
             return vm.handle_page_fault(addr);
@@ -252,10 +254,10 @@ impl ProcessManager {
         let proc_vm = Some(ProcessVm::new(page_table));
         let proc = Process::new(name, parent, proc_vm, proc_data);
 
-        let mut inner = proc.write();
+        // let mut inner = proc.write();
         
         // FIXME: load elf to process pagetable
-        inner.load_elf(elf);
+        proc.write().load_elf(elf);
         
         // FIXME: alloc new stack for process
         let stack_top = proc.alloc_init_stack();
@@ -264,12 +266,12 @@ impl ProcessManager {
         let entry_point = VirtAddr::new(elf.header.pt2.entry_point());
         
         // Set up the process context with entry point and stack for user process
-        inner.get_proc_context().init_user_stack_frame(entry_point, stack_top);
+        proc.write().get_proc_context().init_user_stack_frame(entry_point, stack_top);
         
         // FIXME: mark process as ready
-        inner.set_status(ProgramStatus::Ready);
+        proc.write().set_status(ProgramStatus::Ready);
         
-        drop(inner);
+        drop(proc.write());
 
         trace!("New {:#?}", &proc);
 

@@ -130,10 +130,11 @@ impl Stack {
         let fault_page = Page::<Size4KiB>::containing_address(addr);
         let stack_bot = self.range.start;
 
-        if fault_page >= stack_bot {
-            // Address is already mapped
-            return Ok(());
-        }
+        // Check if the fault page is within the currently mapped stack range
+        // if fault_page >= self.range.start && fault_page < self.range.end {
+        //     trace!("Address {:#x} is already mapped in stack range.", addr);
+        //     return Ok(()); // 在已映射区域内
+        // }
 
         // Map all pages from fault_page to stack_bot (exclusive)
         let pages_to_map = Page::range(fault_page, stack_bot);
